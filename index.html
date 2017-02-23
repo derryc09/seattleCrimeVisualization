@@ -7,13 +7,17 @@
     <script src="https://d3js.org/topojson.v1.min.js"></script>
 
 </head>
+
+<!--Silder for the filter-->
 <div id="sliderContainer">
     Filter by year<br>
     <input id="timeslide" type="range" min="0" max="6" value="0" step="1"/><br>
     <span id="range">2017</span><br>
     <button id="start">Transition</button>
-<button id="reset">Reset</button>
+    <button id="reset">Reset</button>
 </div>
+
+
 <body data-gr-c-s-loaded="true">
    <h1>Crime Incidents in Seattle</h1>
    <h2>Hover over plot points for incident description.</h2>
@@ -78,29 +82,29 @@
     var width = 700;
     var height = 580;
     var inputValue = null;
-    var year = [2017,2016,2015,2014,2013,2012,2011];
-    var svg = d3.select( ".container" )
+    var year = [2017,2016,2015,2014,2013,2012,2011]; //Slider selections
+    var svg = d3.select( ".container" ) //creates SVG
         .append( "svg" )
         .attr( "width", width )
         .attr( "height", height );
 
     var g = svg.append( "g" );
 
-    var albersProjection = d3.geo.albers()
-        .scale( 190000 )
-        .rotate( [122.3221,0] )
-        .center( [0, 47.6062] )
+    var albersProjection = d3.geo.albers()  //create albers projection
+        .scale( 190000 )  
+        .rotate( [122.3221,0] )   //rotate the projection to 
+        .center( [0, 47.6062] )   //point to Seattle
         .translate( [width/2,height/2] );
        
 
     var geoPath = d3.geo.path()
-        .projection(albersProjection );
+        .projection(albersProjection );  //store this path as a variable.
 
 
 
 
-    g.selectAll( "path" )
-        .data(neighborhoods_json.features)
+    g.selectAll( "path" )                   
+        .data(neighborhoods_json.features)  //grabs seattle neighborhood svg data. 
         .enter()
         .append( "path" )
         .attr( "fill", "none" )
@@ -113,15 +117,15 @@
         .data(crimedata.features)
         .enter()
         .append( "path" )
-        .attr( "fill", initialDate )
-        .attr( "stroke", initialDate2 )
+        .attr( "fill", initialDate )    //intial date checks which rows of data has year same as initially selected one. 
+        .attr( "stroke", initialDate2 )  //same as above. 
         .attr( "d", geoPath )
         .attr( "class", "crime")
-        .on("mouseover", function(d){
+        .on("mouseover", function(d){   //hover function - displays brief description regarding the incident. 
             var description = d.properties["Offense Type"];
             var result ="A ";
-            var arr = description.split("-");
-            for(var i = 0; i < arr.length; i++){
+            var arr = description.split("-"); //splits the description into arrays. 
+            for(var i = 0; i < arr.length; i++){    //parse throught he words and create human readable sentences. 
                 if(arr[i] == "FORCE"){
                     result += " forced burglary";
                 } else if (arr[i] == "NOFORCE"){
@@ -134,37 +138,39 @@
                     result += " at a residential area close to " +d.properties["Hundred Block Location"]+ " on " +d.properties["Date Reported"] +".";
                 }     
             }
-            d3.select("h2").text(result);
-            d3.select(this).attr("class","crime hover");
+            d3.select("h2").text(result); //displays the constructed human-readble sntence in h2.
+            d3.select(this).attr("class","crime hover"); 
         })
-        .on("mouseout", function(d){
+        .on("mouseout", function(d){  //h2 reverts back to default text on hover-out. 
             d3.select("h2").text("Hover over plot points for incident description.");
             d3.select(this).attr("class","crime");
         }); 
          
-    d3.select("#timeslide").on("input", function() {
+    d3.select("#timeslide").on("input", function() {  //updates the value per each slide. 
         update(+this.value);
     });
 
     // update the fill of each SVG of class "incident" with value
     function update(value) {
-        document.getElementById("range").innerHTML=year[value];
+        document.getElementById("range").innerHTML=year[value]; //gets the slider value. 
         inputValue = year[value];
         d3.selectAll(".crime")
-            .attr("fill", dateMatch)
+            .attr("fill", dateMatch)  //update the colors of the fills and strokes by comparing with years.
             .attr("stroke", dateMatch2);
     }
-    function dateMatch(data, value) {
+
+    function dateMatch(data, value) { //function that cheks whether the currect selected year matches the current row of data. if yes, 
+                                        // changes color to red, if no, make plot point transparent. 
         var d = new Date(data.properties["Date Reported"]);
         var y = d.getYear()+1900;
         if (inputValue == y) {
             this.parentElement.appendChild(this);
-            return "red";
+            return "red"; 
         } else {
             return "none"; //fill color of the non-selected dots. 
         };
     }
-    function initialDate(d,i){
+    function initialDate(d,i){ // same as dateMatch function. 
         var d = new Date(d.properties["Date Reported"]);
         var y = d.getYear()+1900;
         
@@ -176,7 +182,7 @@
         };
     }
 
-    function dateMatch2(data, value) {
+    function dateMatch2(data, value) { // same as dateMatch function. 
         var d = new Date(data.properties["Date Reported"]);
         var y = d.getYear()+1900;
         if (inputValue == y) {
@@ -186,7 +192,7 @@
             return "none"; //fill color of the non-selected dots. 
         };
     }
-    function initialDate2(d,i){
+    function initialDate2(d,i){   // same as dateMatch function. 
         var d = new Date(d.properties["Date Reported"]);
         var y = d.getYear()+1900;
         
@@ -202,13 +208,13 @@
     </script>
     
 
+    script for second visualization
     <script>
-    var countsByMonth = [0,0,0,0,0,0,0,0,0,0,0,0];
-    // for(var i = 0; i < crimedata.features.length; i++){
+    var countsByMonth = [0,0,0,0,0,0,0,0,0,0,0,0]; //create an empty array with size 12 to count the occurences of crime per each month. 
     for(var i = 0; i < crimedata.features.length; i++){
-        countsByMonth[new Date(crimedata.features[i].properties["Date Reported"]).getMonth()]++;
+        countsByMonth[new Date(crimedata.features[i].properties["Date Reported"]).getMonth()]++;  //incremets the array. 
     }
-    var countX = 0;
+    var countX = 0;  //counter. 
     createVisualization();
 
     var tooltip = d3.select("body")
@@ -241,11 +247,11 @@
 						.attr("height", h)
 						.attr("style", "outline: none;");
                         
-            var xAxis = d3.svg.axis()
+            var xAxis = d3.svg.axis()  //creates X Axis
                 .scale(xScale)
                 .orient("bottom")
                 .ticks(11);
-            var yAxis = d3.svg.axis()
+            var yAxis = d3.svg.axis()  //creates Y Axis
                 .scale(yScale)
                 .orient("left")
                 .ticks(10);                
@@ -263,7 +269,7 @@
             
             var value= ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
             countX = 0;
-            var myMap = new Map();
+            var myMap = new Map();  //create a map to get Month fvalue. 
 
 			svg.selectAll("circle")
 			   .data(countsByMonth)
@@ -280,10 +286,10 @@
 			   })
 			   .attr("r", 8)
                .on("mouseover", function(d){
-                    return tooltip.style("visibility", "visible").text(value[myMap.get(d)] +": "+d);
+                    return tooltip.style("visibility", "visible").text(value[myMap.get(d)] +": "+d);    //displays the month and conut of crimes on hover. 
                 })
                 .on("mousemove", function(d){
-                    return tooltip.style("top", (event.pageY-20)+"px").style("left",(event.pageX+10)+"px").text(value[myMap.get(d)] +": "+d);
+                    return tooltip.style("top", (event.pageY-20)+"px").style("left",(event.pageX+10)+"px").text(value[myMap.get(d)] +": "+d); //displays the month and conut of crimes on hover. 
                 })
                 .on("mouseout", function(d){
                     return tooltip.style("visibility", "hidden");
