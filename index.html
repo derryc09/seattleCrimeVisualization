@@ -1,0 +1,295 @@
+<html class="gr__duspviz_mit_edu"><head>
+    <title>A D3 map</title>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script> 
+       
+    <script src="gn-seattle.geojson"></script>
+    <script src="seattleCrimeData.geojson"></script>
+    <script src="http://d3js.org/topojson.v1.min.js"></script>
+
+</head>
+<div id="sliderContainer">
+    Filter by year<br>
+    <input id="timeslide" type="range" min="0" max="6" value="0" step="1"/><br>
+    <span id="range">2017</span><br>
+    <button id="start">Transition</button>
+<button id="reset">Reset</button>
+</div>
+<body data-gr-c-s-loaded="true">
+   <h1>Crime Incidents in Seattle</h1>
+   <h2>Hover over plot points for incident description.</h2>
+   <div class="container"></div>
+
+
+   <div class="container2">
+        <h3>Count of burglaries by month</h3>
+   </div>
+</body>
+<style>
+
+    body {
+        font-family: "Proxima Nova", "Montserrat", sans-serif;
+    }
+    h1, h2 {
+        left: 10px;
+        font-size: 1.3em;
+        font-weight: 100;
+    }
+    h2 {
+        top: 30px;
+        font-size: 1em;
+    }
+    svg{
+        text-align: center;
+        margin: 0 auto;
+    }
+    .hover {
+        fill: yellow;   
+    }    
+    .container{
+        margin-top:40px;
+    }
+    .container2>h3{
+        margin-bottom: 0px;
+        margin-top:50px;
+    }
+    circle:hover{
+        cursor: pointer;
+        fill:red;
+        r:10;
+    }
+    #sliderContainer{
+        top: 300px;
+        left: 50%;
+        text-align: center;
+        position: absolute;
+    }
+    .axis {
+        font: 10px sans-serif;
+    }
+
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
+    }    
+</style>
+ <script>
+    var width = 700;
+    var height = 580;
+    var inputValue = null;
+    var year = [2017,2016,2015,2014,2013,2012,2011];
+    var svg = d3.select( ".container" )
+        .append( "svg" )
+        .attr( "width", width )
+        .attr( "height", height );
+
+    var g = svg.append( "g" );
+
+    var albersProjection = d3.geo.albers()
+        .scale( 190000 )
+        .rotate( [122.3221,0] )
+        .center( [0, 47.6062] )
+        .translate( [width/2,height/2] );
+       
+
+    var geoPath = d3.geo.path()
+        .projection(albersProjection );
+
+
+
+
+    g.selectAll( "path" )
+        .data(neighborhoods_json.features)
+        .enter()
+        .append( "path" )
+        .attr( "fill", "none" )
+        .attr( "stroke", "grey")
+        .attr( "d", geoPath )
+
+    
+    var crimes = svg.append( "g" );
+    crimes.selectAll( "path" )
+        .data(crimedata.features)
+        .enter()
+        .append( "path" )
+        .attr( "fill", initialDate )
+        .attr( "stroke", initialDate2 )
+        .attr( "d", geoPath )
+        .attr( "class", "crime")
+        .on("mouseover", function(d){
+            var description = d.properties["Offense Type"];
+            var result ="A ";
+            var arr = description.split("-");
+            for(var i = 0; i < arr.length; i++){
+                if(arr[i] == "FORCE"){
+                    result += " forced burglary";
+                } else if (arr[i] == "NOFORCE"){
+                    result += " non-forced burglary";
+                } else if(arr[i] == "SECURE PARKING"){
+                    result += " burglary in a secure parking lot";
+                } else if (arr[i] == "NONRES"){
+                    result += " at a non-residential area close to " +d.properties["Hundred Block Location"]+ " on " +d.properties["Date Reported"] +".";
+                }else if (arr[i] == "RES"){
+                    result += " at a residential area close to " +d.properties["Hundred Block Location"]+ " on " +d.properties["Date Reported"] +".";
+                }     
+            }
+            d3.select("h2").text(result);
+            d3.select(this).attr("class","crime hover");
+        })
+        .on("mouseout", function(d){
+            d3.select("h2").text("Hover over plot points for incident description.");
+            d3.select(this).attr("class","crime");
+        }); 
+         
+    d3.select("#timeslide").on("input", function() {
+        update(+this.value);
+    });
+
+    // update the fill of each SVG of class "incident" with value
+    function update(value) {
+        document.getElementById("range").innerHTML=year[value];
+        inputValue = year[value];
+        d3.selectAll(".crime")
+            .attr("fill", dateMatch)
+            .attr("stroke", dateMatch2);
+    }
+    function dateMatch(data, value) {
+        var d = new Date(data.properties["Date Reported"]);
+        var y = d.getYear()+1900;
+        if (inputValue == y) {
+            this.parentElement.appendChild(this);
+            return "red";
+        } else {
+            return "none"; //fill color of the non-selected dots. 
+        };
+    }
+    function initialDate(d,i){
+        var d = new Date(d.properties["Date Reported"]);
+        var y = d.getYear()+1900;
+        
+        if (y == 2017) {
+            this.parentElement.appendChild(this);
+            return "red";
+        } else {
+            return "none";//fill color of the non-selected dots. 
+        };
+    }
+
+    function dateMatch2(data, value) {
+        var d = new Date(data.properties["Date Reported"]);
+        var y = d.getYear()+1900;
+        if (inputValue == y) {
+            this.parentElement.appendChild(this);
+            return "#999";
+        } else {
+            return "none"; //fill color of the non-selected dots. 
+        };
+    }
+    function initialDate2(d,i){
+        var d = new Date(d.properties["Date Reported"]);
+        var y = d.getYear()+1900;
+        
+        if (y == 2017) {
+            this.parentElement.appendChild(this);
+            return "#999";
+        } else {
+            return "none";//fill color of the non-selected dots. 
+        };
+    }
+
+
+    </script>
+    
+
+    <script>
+    var countsByMonth = [0,0,0,0,0,0,0,0,0,0,0,0];
+    // for(var i = 0; i < crimedata.features.length; i++){
+    for(var i = 0; i < crimedata.features.length; i++){
+        countsByMonth[new Date(crimedata.features[i].properties["Date Reported"]).getMonth()]++;
+    }
+    var countX = 0;
+    createVisualization();
+
+    var tooltip = d3.select("body")
+        .append("div")
+        .style("position", "absolute")
+        .style("font-family", "sans-serif")
+        .style("font-size", "10px")
+        .style("z-index", "10")
+        .style("visibility", "hidden");    
+    function createVisualization(){
+
+			var w = 360;
+			var h = 360;
+            var padding = 40;
+
+            var xScale = d3.scale.linear()
+                .domain([0, 12])
+                .range([padding, w-padding]);
+
+            var yScale = d3.scale.linear()
+                .domain([0, d3.max(countsByMonth, function(d) {
+                    return d;
+                })])
+                .range([h-padding, padding]);
+
+			//Create SVG element
+			var svg = d3.select("body")
+						.append("svg")
+						.attr("width", w)
+						.attr("height", h)
+						.attr("style", "outline: none;");
+                        
+            var xAxis = d3.svg.axis()
+                .scale(xScale)
+                .orient("bottom")
+                .ticks(11);
+            var yAxis = d3.svg.axis()
+                .scale(yScale)
+                .orient("left")
+                .ticks(10);                
+            
+            
+
+            svg.append("g")
+                .attr("class", "axis")  //Assign "axis" class
+			    .attr("transform", "translate(0," + (h - padding) + ")")
+                .call(xAxis);
+            svg.append("g")
+                .attr("class", "axis")
+                .attr("transform", "translate(" + padding + ", 0)")
+                .call(yAxis);                
+            
+            var value= ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            countX = 0;
+            var myMap = new Map();
+
+			svg.selectAll("circle")
+			   .data(countsByMonth)
+			   .enter()
+			   .append("circle")
+			   .attr("cx", function(d) {
+                   myMap.set(d, countX);
+                   countX++;
+			   	    return xScale(countX);
+			   })
+			   .attr("cy", function(d) {
+
+			   		return yScale(d);
+			   })
+			   .attr("r", 8)
+               .on("mouseover", function(d){
+                    return tooltip.style("visibility", "visible").text(value[myMap.get(d)] +": "+d);
+                })
+                .on("mousemove", function(d){
+                    return tooltip.style("top", (event.pageY-20)+"px").style("left",(event.pageX+10)+"px").text(value[myMap.get(d)] +": "+d);
+                })
+                .on("mouseout", function(d){
+                    return tooltip.style("visibility", "hidden");
+                });
+    }
+
+
+                               
+    </script>
