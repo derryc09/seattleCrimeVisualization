@@ -1,7 +1,11 @@
 <html class="gr__duspviz_mit_edu"><head>
     <title>A D3 map</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
     <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script> 
-       
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
+
     <script src="gn-seattle.geojson"></script>
     <script src="seattleCrimeData.geojson"></script>
     <script src="https://d3js.org/topojson.v1.min.js"></script>
@@ -13,8 +17,9 @@
     Filter by year<br>
     <input id="timeslide" type="range" min="0" max="6" value="0" step="1"/><br>
     <span id="range">2017</span><br>
-    <button id="start">Transition</button>
-    <button id="reset">Reset</button>
+    <button id="start">Start</button>
+    <button id="stop">Stop</button>    
+    <!--<button id="reset">Reset</button>-->
 </div>
 
 
@@ -25,13 +30,14 @@
 
 
    <div class="container2">
-        <h3>Count of burglaries by month</h3>
+        <h1>Count of burglaries by month</h1>
    </div>
 </body>
 <style>
 
     body {
         font-family: "Proxima Nova", "Montserrat", sans-serif;
+        padding-left:50px;
     }
     h1, h2 {
         left: 10px;
@@ -48,6 +54,7 @@
     }
     .hover {
         fill: yellow;   
+        r:15;
     }    
     .container{
         margin-top:40px;
@@ -81,6 +88,7 @@
  <script>
     var width = 700;
     var height = 580;
+    var centered;
     var inputValue = null;
     var year = [2017,2016,2015,2014,2013,2012,2011]; //Slider selections
     var svg = d3.select( ".container" ) //creates SVG
@@ -125,7 +133,7 @@
             var description = d.properties["Offense Type"];
             var result ="A ";
             var arr = description.split("-"); //splits the description into arrays. 
-            for(var i = 0; i < arr.length; i++){    //parse throught he words and create human readable sentences. 
+            for(var i = 0; i < arr.length; i++){    //parse throught the words and create human readable sentences. 
                 if(arr[i] == "FORCE"){
                     result += " forced burglary";
                 } else if (arr[i] == "NOFORCE"){
@@ -141,6 +149,27 @@
             d3.select("h2").text(result); //displays the constructed human-readble sntence in h2.
             d3.select(this).attr("class","crime hover"); 
         })
+        .on("click", function(d){
+             var x, y, k;
+            if (d && centered !== d) {
+                var centroid = geoPath.centroid(d);
+                x = centroid[0];
+                y = centroid[1];
+                k = 4;
+                centered = d;
+            } else {
+                x = width / 2;
+                y = height / 2;
+                k = 1;
+                centered = null;
+            }
+            g.selectAll("path")
+                .classed("active", centered && function(d) { return d === centered; });
+            g.transition()
+                .duration(750)
+                .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")scale(" + k + ")translate(" + -x + "," + -y + ")")
+                .style("stroke-width", 1.5 / k + "px");
+        })
         .on("mouseout", function(d){  //h2 reverts back to default text on hover-out. 
             d3.select("h2").text("Hover over plot points for incident description.");
             d3.select(this).attr("class","crime");
@@ -149,6 +178,25 @@
     d3.select("#timeslide").on("input", function() {  //updates the value per each slide. 
         update(+this.value);
     });
+
+
+    //plays animation.
+    var myTimer;
+    d3.select("#start").on("click", function() {
+        clearInterval (myTimer);
+        myTimer = setInterval (function() {
+            var b= d3.select("#timeslide");
+            var t = (+b.property("value") + 1) % (+b.property("max") + 1);
+            if (t == 0) { t = +b.property("min"); 
+        }
+        b.property("value", t);
+        update (t);
+        }, 2000);
+    });
+    d3.select("#stop").on("click", function() {
+        clearInterval (myTimer);
+    });
+
 
     // update the fill of each SVG of class "incident" with value
     function update(value) {
@@ -205,10 +253,11 @@
     }
 
 
+
     </script>
     
 
-    script for second visualization
+    <!--script for second visualization-->
     <script>
     var countsByMonth = [0,0,0,0,0,0,0,0,0,0,0,0]; //create an empty array with size 12 to count the occurences of crime per each month. 
     for(var i = 0; i < crimedata.features.length; i++){
@@ -271,7 +320,7 @@
             countX = 0;
             var myMap = new Map();  //create a map to get Month fvalue. 
 
-			svg.selectAll("circle")
+			var circle = svg.selectAll("circle")
 			   .data(countsByMonth)
 			   .enter()
 			   .append("circle")
@@ -286,7 +335,7 @@
 			   })
 			   .attr("r", 8)
                .on("mouseover", function(d){
-                    return tooltip.style("visibility", "visible").text(value[myMap.get(d)] +": "+d);    //displays the month and conut of crimes on hover. 
+                    return tooltip.style("visibility", "visible").text(value[myMap.get(d)] +": "+d);    //displays the month and count of crimes on hover. 
                 })
                 .on("mousemove", function(d){
                     return tooltip.style("top", (event.pageY-20)+"px").style("left",(event.pageX+10)+"px").text(value[myMap.get(d)] +": "+d); //displays the month and conut of crimes on hover. 
@@ -294,7 +343,13 @@
                 .on("mouseout", function(d){
                     return tooltip.style("visibility", "hidden");
                 });
-    }
+
+            circle
+                .transition()
+                .duration(2000)
+                    .attr('fill-opacity', 0.2)
+                    .attr('r', function(item) { return 100 * item; }); 
+                }
 
 
                                
