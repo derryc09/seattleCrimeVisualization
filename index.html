@@ -3,11 +3,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 
-    <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script> 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
 
     <script src="gn-seattle.geojson"></script>
-    <script src="seattleCrimeData.geojson"></script>
+    <script src="seattleCrimeData.geojson"></script>    
+    <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script> 
     <script src="https://d3js.org/topojson.v1.min.js"></script>
 
 </head>
@@ -264,7 +264,7 @@
         countsByMonth[new Date(crimedata.features[i].properties["Date Reported"]).getMonth()]++;  //incremets the array. 
     }
     var countX = 0;  //counter. 
-    createVisualization();
+    createVisualization2();
 
     var tooltip = d3.select("body")
         .append("div")
@@ -273,7 +273,7 @@
         .style("font-size", "10px")
         .style("z-index", "10")
         .style("visibility", "hidden");    
-    function createVisualization(){
+    function createVisualization2(){
 
 			var w = 360;
 			var h = 360;
@@ -320,7 +320,7 @@
             countX = 0;
             var myMap = new Map();  //create a map to get Month fvalue. 
 
-			var circle = svg.selectAll("circle")
+			svg.selectAll("circle")
 			   .data(countsByMonth)
 			   .enter()
 			   .append("circle")
@@ -343,14 +343,7 @@
                 .on("mouseout", function(d){
                     return tooltip.style("visibility", "hidden");
                 });
-
-            circle
-                .transition()
-                .duration(2000)
-                    .attr('fill-opacity', 0.2)
-                    .attr('r', function(item) { return 100 * item; }); 
-                }
-
+    }
 
                                
     </script>
