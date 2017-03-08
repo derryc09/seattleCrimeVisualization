@@ -1,5 +1,7 @@
 <html class="gr__duspviz_mit_edu"><head>
     <title>Seattle Crime Visualization</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+
     <link rel="stylesheet" href="multirange.css">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
@@ -16,7 +18,15 @@
 </head>
 
 <!--Silder for the filter-->
-<div id="sliderContainer">  
+<div id="sliderContainer"> 
+    <div class="dateDisplayed">
+        <h2 id="dateDisplayed2"></h2>
+    </div>
+
+
+    <div class="description">
+        <h2>Hover over plot points for incident description.</h2>
+    </div> 
     <div class="filterByYear">
         Filter by year<br>
         <input onchange="update()"id="yearSlide" type="range" multiple value="0,6" min="0" max="6" step="1"/>
@@ -40,7 +50,6 @@
 
 <body data-gr-c-s-loaded="true">
    <h1>Crime Incidents in Seattle</h1>
-   <h2>Hover over plot points for incident description.</h2>
    <div class="container-unique"></div>
 
 
@@ -49,11 +58,22 @@
    </div>
 </body>
 <style>
-
+    h1 {
+        text-align: center;
+        font-size: 34px !important;
+        margin-bottom: 40px;
+    }
     body {
         font-family: "Proxima Nova", "Montserrat", sans-serif;
         padding-left:50px;
     }
+    .description{
+        height: 100px;
+    }
+    .dateDisplayed{
+        height:50px;
+    }
+
     
     h1, h2 {
         left: 10px;
@@ -88,7 +108,7 @@
         r:10;
     }*/
     #sliderContainer{
-        top: 300px;
+        top: 100px;
         left: 50%;
         width: 220px;
         min-width: 220px;
@@ -105,6 +125,14 @@
         stroke: #000;
         shape-rendering: crispEdges;
     }    
+
+    #dateDisplayed2 {
+        font-size: 32px !important;
+    -moz-animation-duration: 0.18s;
+    -moz-animation-delay: 0s;
+        -webkit-animation-duration: 0.18s;
+    -webkit-animation-delay: 0s;
+    }    
 </style>
  <script>
     var width = 700;
@@ -115,7 +143,14 @@
     var countsByMonth = [0,0,0,0,0,0,0,0,0,0,0,0];
     var year = [2017,2016,2015,2014,2013,2012,2011]; //Slider selections
     var month = ["Janurary", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
+    $.fn.extend({
+        animateCss: function (animationName) {
+            var animationEnd = 'webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend';
+            this.addClass('animated ' + animationName).one(animationEnd, function() {
+                $(this).removeClass('animated ' + animationName);
+            });
+        }
+    });
 
     var svg = d3.select( ".container-unique" ) //creates SVG
         .append( "svg" )
@@ -204,6 +239,10 @@
 
     function visualize(passedData, animated){
         var filteredPassedData = [];
+        passedData.sort(function(a, b) {
+            return (new Date(a.properties["Date Reported"])- new Date(b.properties["Date Reported"]));
+        });
+        // console.log(passedData);
         for(var i = 0; i < passedData.length; i++){
             var calculatedMonth2 = new Date(passedData[i].properties["Date Reported"]).getMonth()+1;
             if(calculatedMonth2 >= document.getElementById("monthSlide").valueLow && calculatedMonth2 <= document.getElementById("monthSlide").valueHigh){
@@ -211,26 +250,28 @@
             }
         }
         crimes.selectAll("circle").remove();
-        
+        var color = ["grey", "black"];
         if(animated){
             var step = 0;
             var dataToPlot = [];     
-            dataToPlot.length = 0;   
-            // console.log(dataToPlot);
             var pointAdd = setInterval(function(){
-                // console.log(step);
                 dataToPlot.push(filteredPassedData[step]);
                 step += 1;
-                // stop once all data is plotted
-                if (step > filteredPassedData.length) {
+                if (step >= filteredPassedData.length) {
                     clearInterval(pointAdd);
                 } else {
+
+                    document.getElementById("dateDisplayed2").innerHTML = ("Date: " + filteredPassedData[step].properties["Date Reported"])
+                    document.getElementById("dateDisplayed2").style.color = color[step%2];
+                    $("#dateDisplayed2").animateCss('pulse');
                     addAPoint(dataToPlot);
+                    
                 }	
-            },1000 * Math.random());
+            },1000);
         } else {
              addAPoint(filteredPassedData)
         }
+        document.getElementById("dateDisplayed2").innerHTML = ("");
 
     }
 // fill: #ffd800;
@@ -299,6 +340,8 @@
                 d3.select("h2").text("Hover over plot points for incident description.");
                 d3.select(this).attr("class","crime");
                 $(this).css("r", 5);
+                $(this).css("fill", "red");
+                $(this).css("fill-opacity", 0.2);                
             })
     }       
     
