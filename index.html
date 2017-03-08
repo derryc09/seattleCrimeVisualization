@@ -3,12 +3,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
 
     <link rel="stylesheet" href="multirange.css">
-    
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/css/materialize.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.0/js/materialize.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+    <!--<script type="text/javascript" src="clickbubble.js"></script>-->
+
     <script src="multirange.js"></script>
     <script src="gn-seattle.geojson"></script>
     <script src="seattleCrimeData.geojson"></script>    
@@ -72,6 +74,7 @@
     }
     .dateDisplayed{
         height:50px;
+        margin-bottom: 50px;
     }
 
     
@@ -102,11 +105,6 @@
         margin-bottom: 0px;
         margin-top:50px;
     }
-    /*circle:hover{
-        cursor: pointer;
-        fill:red;
-        r:10;
-    }*/
     #sliderContainer{
         top: 100px;
         left: 50%;
@@ -126,13 +124,15 @@
         shape-rendering: crispEdges;
     }    
 
+
     #dateDisplayed2 {
         font-size: 32px !important;
-    -moz-animation-duration: 0.18s;
-    -moz-animation-delay: 0s;
+        -moz-animation-duration: 0.18s;
+        -moz-animation-delay: 0s;
         -webkit-animation-duration: 0.18s;
-    -webkit-animation-delay: 0s;
-    }    
+        -webkit-animation-delay: 0s;
+    }   
+  
 </style>
  <script>
     var width = 700;
@@ -251,38 +251,43 @@
         }
         crimes.selectAll("circle").remove();
         var color = ["grey", "black"];
+        var radius = -(filteredPassedData.length/1500) + 12
         if(animated){
+
             var step = 0;
             var dataToPlot = [];     
             var pointAdd = setInterval(function(){
                 dataToPlot.push(filteredPassedData[step]);
                 step += 1;
                 if (step >= filteredPassedData.length) {
+                    document.getElementById("startWithAnimation").disabled = false;
+
                     clearInterval(pointAdd);
                 } else {
 
                     document.getElementById("dateDisplayed2").innerHTML = ("Date: " + filteredPassedData[step].properties["Date Reported"])
                     document.getElementById("dateDisplayed2").style.color = color[step%2];
                     $("#dateDisplayed2").animateCss('pulse');
-                    addAPoint(dataToPlot);
+                    addAPoint(dataToPlot, radius, animated);
                     
                 }	
             },1000);
         } else {
-             addAPoint(filteredPassedData)
+             addAPoint(filteredPassedData, radius, animated)
         }
         document.getElementById("dateDisplayed2").innerHTML = ("");
-
     }
-// fill: #ffd800;
- function addAPoint(dataToPlot){
+
+ function addAPoint(dataToPlot, radius, animated){
+        var xxx;
+        var yyy;
         crimes.selectAll( "circle" )
             .data(dataToPlot)
             .enter()
-            .append( "circle" )
-            .attr("cx", function (d) { return albersProjection(d.geometry.coordinates)[0]; })
-            .attr("cy", function (d) { return albersProjection(d.geometry.coordinates)[1]; })
-            .attr("r", 5)
+            .append( "circle" )   
+            .attr("cx", function (d) { xxx = albersProjection(d.geometry.coordinates)[0]; return xxx;})
+            .attr("cy", function (d) { yyy = albersProjection(d.geometry.coordinates)[1]; return yyy;})
+            .attr("r", radius)
             .style("stroke-width", 5 / (i))
             // .attr( "fill", "red" )    //intial date checks which rows of data has year same as initially selected one. 
             // .attr( "stroke", "none" )  //same as above. 
@@ -291,6 +296,41 @@
             .style("fill-opacity", .2) // set the fill opacity
             .style("stroke", "black")    // set the line colour
             .style("fill", "red")   // set the fill colour
+            .call(function(d, opt){
+                if(animated){
+                var options = $.extend({
+                    color: 'red',
+                    size: 50,
+                    time: 500,
+                    borderWidth: 2
+                }, opt);
+
+                var id = 0;
+               
+                $('<div>')
+                .attr('id', 'clickBubble_' + id)
+                .css({
+                    'width': 0,
+                    'height': 0,
+                    'border': options.borderWidth + 'px solid ' + options.color,
+                    'position': 'absolute',
+                    'left': xxx+20,
+                    'top': yyy+84.5,
+                    'border-radius': '50%'
+                })
+
+                .animate({
+                    'width': options.size + 'px',
+                    'height': options.size + 'px',
+                    'left': xxx+20,
+                    'top':  yyy+84.5,
+                    opacity: 0
+                }, options.time, function() {
+                    $(this).remove();
+                })
+                .appendTo('body');
+                }
+            })
             .on("mouseover", function(d){   //hover function - displays brief description regarding the incident. 
                 var description = d.properties["Offense Type"];
                 var result ="A ";
@@ -308,9 +348,9 @@
                         result += " at a residential area close to " +d.properties["Hundred Block Location"]+ " on " +d.properties["Date Reported"] +".";
                     }     
                 }
-                d3.select("h2").text(result); //displays the constructed human-readble sntence in h2.
+                d3.select(".description").text(result); //displays the constructed human-readble sntence in h2.
                 d3.select(this).attr("class","crime hover"); 
-                $(this).css("r", 10);
+                $(this).css("r", radius+5);
                 $(this).css("fill", "brown");
                 $(this).css("fill-opacity", 0.7);
 
@@ -337,9 +377,9 @@
                     .style("stroke-width", 1.5 / k + "px");
             })
             .on("mouseout", function(d){  //h2 reverts back to default text on hover-out. 
-                d3.select("h2").text("Hover over plot points for incident description.");
+                d3.select(".description").text("Hover over plot points for incident description.");
                 d3.select(this).attr("class","crime");
-                $(this).css("r", 5);
+                $(this).css("r", radius);
                 $(this).css("fill", "red");
                 $(this).css("fill-opacity", 0.2);                
             })
@@ -348,7 +388,7 @@
 
     
 
-    
+
 
     //plays animation.
     var myTimer;
@@ -364,7 +404,8 @@
     });
 
     d3.select("#startWithAnimation").on("click", function() {
-
+        console.log("balh");
+        document.getElementById("startWithAnimation").disabled = true;
         var calculatedYearData = [];
         for(var i = document.getElementById("yearSlide").valueLow; i <= document.getElementById("yearSlide").valueHigh; i++){
             allData[i].forEach(function(entry) {
@@ -372,6 +413,7 @@
             });
         }
         visualize(calculatedYearData, true);
+
     });    
 
     d3.select("#stop").on("click", function() {
