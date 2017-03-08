@@ -359,7 +359,7 @@
                 .animate({
                     'width': options.size + 'px',
                     'height': options.size + 'px',
-                    'left': xxx+20,
+                    'left': xxx+25,
                     'top':  yyy+84.5,
                     opacity: 0
                 }, options.time, function() {
@@ -391,27 +391,6 @@
                 $(this).css("fill", "brown");
                 $(this).css("fill-opacity", 0.7);
 
-            })
-            .on("click", function(d){
-                var x, y, k;
-                if (d && centered !== d) {
-                    var centroid = geoPath.centroid(d);
-                    x = centroid[0];
-                    y = centroid[1];
-                    k = 4;
-                    centered = d;
-                } else {
-                    x = width / 2;
-                    y = height / 2;
-                    k = 1;
-                    centered = null;
-                }
-                g.selectAll("circle")
-                    .classed("active", centered && function(d) { return d === centered; });
-                g.transition()
-                    .duration(750)
-                    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")scale(" + k + ")translate(" + -x + "," + -y + ")")
-                    .style("stroke-width", 1.5 / k + "px");
             })
             .on("mouseout", function(d){  //h2 reverts back to default text on hover-out. 
                 d3.select(".description").text("Hover over plot points for incident description.");
