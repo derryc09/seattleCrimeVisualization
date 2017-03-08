@@ -42,9 +42,11 @@
         <p>From <span id="startMonth">Janurary</span> to <span id="endMonth">December</span></p>
     </div>
     <br><br>
-    <button id="start">Start</button>
-    <button id="startWithAnimation">Start with Animation</button>
-    <button id="stop">Reload and Refresh</button>    
+    <div class="controlButtons">
+        <button id="start">Start</button>
+        <button id="startWithAnimation">Start with Animation</button>
+    </div>
+    <button id="stop">Stop Animation or Refresh</button>    
     <!--<button id="reset">Reset</button>-->
 </div>
 
@@ -281,6 +283,7 @@
  function addAPoint(dataToPlot, radius, animated){
         var xxx;
         var yyy;
+        console.log(radius);
         crimes.selectAll( "circle" )
             .data(dataToPlot)
             .enter()
