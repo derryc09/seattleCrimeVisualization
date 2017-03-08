@@ -297,6 +297,8 @@
                 if (step >= filteredPassedData.length) {
                     document.getElementById("startWithAnimation").disabled = false;
                     document.getElementById("startWithAnimation").style.backgroundColor = 'seagreen';
+                    document.getElementById("start").disabled = false;
+                    document.getElementById("start").style.backgroundColor = 'seagreen';                    
 
                     clearInterval(pointAdd);
                 } else {
@@ -423,6 +425,8 @@
         console.log("balh");
         document.getElementById("startWithAnimation").disabled = true;
         document.getElementById("startWithAnimation").style.backgroundColor = 'grey';
+        document.getElementById("start").disabled = true;
+        document.getElementById("start").style.backgroundColor = 'grey';        
         var calculatedYearData = [];
         for(var i = document.getElementById("yearSlide").valueLow; i <= document.getElementById("yearSlide").valueHigh; i++){
             allData[6-i].forEach(function(entry) {
