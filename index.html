@@ -582,32 +582,6 @@
                     return tooltip.style("visibility", "hidden");
                 })        
                 
-                // svg.append("g")         
-                //     .attr("class", "grid")
-                //     .attr("transform", "translate(0"+"," + 600 + ")")
-                //     .call(make_x_axis()
-                //         .tickSize(-height+padding, padding, 0)
-                //         .tickFormat("")
-                //     )
-                // svg.append("g")         
-                //         .attr("class", "grid")
-                //         .call(make_y_axis()
-                //             .tickSize(-width+padding, padding, 0)
-                //             .tickFormat("")
-                //         )                    
-                // function make_x_axis() {        
-                //     return d3.svg.axis()
-                //         .scale(xScale)
-                //         .orient("bottom")
-                //         .ticks(5)
-                // }
-
-                // function make_y_axis() {        
-                //     return d3.svg.axis()
-                //         .scale(yScale)
-                //         .orient("left")
-                //         .ticks(5)
-                // }         
                 d3.select("#yearArea").on("input", function() {  //updates the value per each slide. 
                     document.getElementById("startYear2").innerHTML = year[document.getElementById("yearSlide2").valueLow];
                     document.getElementById("endYear2").innerHTML = year[document.getElementById("yearSlide2").valueHigh];                    
@@ -654,6 +628,7 @@
                     })])
                     svg.select(".y-axis").transition().call(yAxis);
                 }   
+                 
                        
                 
     }
