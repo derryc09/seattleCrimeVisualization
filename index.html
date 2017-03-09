@@ -33,7 +33,6 @@
         Filter by year<br>
         <input onchange="update()"id="yearSlide" type="range" multiple value="0,6" min="0" max="6" step="1"/>
         <p>From <span id="startYear">2011</span> to <span id="endYear">2017</span></p>
-        <!--<span id="range">2017</span><br>-->
     </div>
     <br>
     <div class="filterByMonth">
@@ -51,7 +50,6 @@
         <button id="startWithAnimation">Plot points with Animation</button>
     </div>
     <button id="stop">Stop and Refresh Page</button>    
-    <!--<button id="reset">Reset</button>-->
 </div>
 
 
@@ -116,7 +114,7 @@
         font-size:20px;
         margin-bottom:20px;
     }
-    *{
+    * {
         font-family: "Proxima Nova", "Montserrat", sans-serif !important;
     }
     #stop{
@@ -201,9 +199,9 @@
     var centered;
     var counter = 0;
     var inputValue = null;
-    var countsByMonth = [0,0,0,0,0,0,0,0,0,0,0,0];
+    var countsByMonth = [0,0,0,0,0,0,0,0,0,0,0,0]; //array to keep the count of burglaries per month;
     var year = [2011,2012,2013,2014,2015,2016,2017]; //Slider selections
-    var month = ["Janurary", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    var month = ["Janurary", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]; // a list of all the months
     $.fn.extend({
         animateCss: function (animationName) {
             var animationEnd = 'webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend';
@@ -236,6 +234,10 @@
     var filtered2013 = [];
     var filtered2012 = [];
     var filtered2011 = [];
+
+    // To enhance performance, do a cache process of the data. 
+    // loop through the entire dataset and split them up by year
+    // omit incidents that are outside of the mapping area. 
     for(var i = 0; i < crimedata.features.length; i++){
         if(
         crimedata.features[i].geometry.coordinates[1] < 47.693313599 && 
@@ -264,7 +266,10 @@
         }
     }
 
+    // store all the files stored in each year as arrays within arrays. 
     var allData = [filtered2017,filtered2016,filtered2015,filtered2014,filtered2013,filtered2012, filtered2011]
+
+    // draw map
     g.selectAll( "path" )                   
         .data(neighborhoods_json.features)  //grabs seattle neighborhood svg data. 
         .enter()
@@ -273,45 +278,52 @@
         .attr( "stroke", "grey")
         .attr( "d", geoPath );
     
-    
     d3.select("#monthSlide").on("input", function() {  //updates the value per each slide. 
         updateMonth(this.value);
     });
+
+    //updates the month values for the sliders. 
     function updateMonth(){
         document.getElementById("startMonth").innerHTML = month[document.getElementById("monthSlide").valueLow-1];
         document.getElementById("endMonth").innerHTML = month[document.getElementById("monthSlide").valueHigh-1];
     }
 
-    d3.select("#yearSlide").on("input", function() {  //updates the value per each slide. 
+    //updates the value per each slide. 
+    d3.select("#yearSlide").on("input", function() {  
         update(this.value);
     });
-    // update the fill of each SVG of class "incident" with value
+
+    //updates the year values for the sliders.  
     function update(value) {
         document.getElementById("startYear").innerHTML = year[document.getElementById("yearSlide").valueLow];
         document.getElementById("endYear").innerHTML = year[document.getElementById("yearSlide").valueHigh];
-
-
-        // document.getElementById("range").innerHTML=year[document.getElementById("yearSlide").value]; //gets the slider value. 
-        // visualize(allData[value]);
     }
 
     var crimes = svg.append( "g" );    
 
+
+    // plots points. 
     function visualize(passedData, animated){
         var filteredPassedData = [];
+        //sorts all the data by time
         passedData.sort(function(a, b) {
             return (new Date(a.properties["Date Reported"])- new Date(b.properties["Date Reported"]));
         });
+
+        //filters out data points that are outside of the selected month frame
         for(var i = 0; i < passedData.length; i++){
             var calculatedMonth2 = new Date(passedData[i].properties["Date Reported"]).getMonth()+1;
             if(calculatedMonth2 >= document.getElementById("monthSlide").valueLow && calculatedMonth2 <= document.getElementById("monthSlide").valueHigh){
                 filteredPassedData.push(passedData[i]);
             }
         }
+
+        // clear out all datapoints
         crimes.selectAll("circle").remove();
         
-        var radius = -(filteredPassedData.length/1500) + 12
-
+        // the radius of the plot points change dynamically based on the number of data to be displayed; 
+        // the more the data points, the smaller the circles. 
+        var radius;
         if(filteredPassedData.length <=100){
             radius = 12;
         } else if (filteredPassedData.length > 100 && filteredPassedData.length <= 2000){
@@ -324,39 +336,43 @@
             radius = 2;
         }
 
+        // display the total number of burglaries based on the applied filters. 
         document.getElementById("totalDisplay").innerHTML = "Total Burglaries: " + filteredPassedData.length;
-        if(animated){
 
+        // checks if user selected to plot points via animation. 
+        if(animated){
             var step = 0;
             var dataToPlot = [];     
             var pointAdd = setInterval(function(){
                 dataToPlot.push(filteredPassedData[step]);
                 step += 1;
                 if (step >= filteredPassedData.length) {
+                    //disable or enable the buttons so as to not interfere with the plotting of points. 
                     document.getElementById("startWithAnimation").disabled = false;
                     document.getElementById("startWithAnimation").style.backgroundColor = 'seagreen';
                     document.getElementById("start").disabled = false;
                     document.getElementById("start").style.backgroundColor = 'seagreen';                    
-
                     clearInterval(pointAdd);
                 } else {
-
+                    //disable or enable the buttons so as to not interfere with the plotting of points.                     
                     document.getElementById("dateDisplayed2").innerHTML = ("Date: " + filteredPassedData[step].properties["Date Reported"])
                     document.getElementById("dateDisplayed2").style.color = "black";
                     $("#dateDisplayed2").animateCss('pulse');
                     addAPoint(dataToPlot, radius, animated);
                     
                 }	
-            },1000);
+            },500);
         } else {
              addAPoint(filteredPassedData, radius, animated)
         }
         document.getElementById("dateDisplayed2").innerHTML = ("");
     }
 
+
+ // actually plot the points. 
  function addAPoint(dataToPlot, radius, animated){
-        var xxx;
-        var yyy;
+        var xxx; // x & y coords for the ripples
+        var yyy; // x & y coords for the ripples
         var colorHover;
         crimes.selectAll( "circle" )
             .data(dataToPlot)
@@ -372,15 +388,15 @@
             .attr( "class", "crime")
             .style("fill-opacity", .2) // set the fill opacity
             .style("stroke", "black")    // set the line colour
-            .style("fill",function (d) { 
+            .style("fill",function (d) { // display different colors based on whether or not force were involved
                 if(d.properties["Offense Type"].toLowerCase().includes("noforce")){
                     colorHover = "green";
                 } else {
                     colorHover = "red";
                 }
                 return colorHover;
-            })   // set the fill colour
-            .call(function(d, opt){
+            })   
+            .call(function(d, opt){  // animation for the ripple effects. 
                 if(animated){
                 var options = $.extend({
                     color: colorHover,
@@ -453,8 +469,6 @@
     }       
     
 
-    
-
 
 
     //plays animation.
@@ -462,6 +476,7 @@
     d3.select("#start").on("click", function() {
 
         var calculatedYearData = [];
+        // preliminary filter of data based on selected year. 
         for(var i = document.getElementById("yearSlide").valueLow; i <= document.getElementById("yearSlide").valueHigh; i++){
             allData[6-i].forEach(function(entry) {
                     calculatedYearData.push(entry)
@@ -470,6 +485,7 @@
         visualize(calculatedYearData, false);
     });
 
+    //disable some buttons to not interfere with plotting of points. then filter data based on selected years. 
     d3.select("#startWithAnimation").on("click", function() {
         document.getElementById("startWithAnimation").disabled = true;
         document.getElementById("startWithAnimation").style.backgroundColor = 'grey';
@@ -570,10 +586,10 @@
                     $(this).css("r", 12);
                     $(this).css("fill", "brown");
                     $(this).css("fill-opacity", 0.8);
-                    return tooltip.style("visibility", "visible").text(value[countX] +": "+d);    //displays the month and count of crimes on hover. 
+                    return tooltip.style("visibility", "visible").text(value[countX] +": "+d);    //displays the  count of crimes on hover. 
                 })
                 .on("mousemove", function(d){
-                    return tooltip.style("top", (event.pageY-30)+"px").style("left",(event.pageX-10)+"px").text(d); //displays the month and count of crimes on hover. 
+                    return tooltip.style("top", (event.pageY-30)+"px").style("left",(event.pageX-10)+"px").text(d); //displays the count of crimes on hover. 
                 })
                 .on("mouseout", function(d){
                     $(this).css("r", 8);
@@ -633,10 +649,9 @@
                 
     }
 
-
+    // filters out the scatterplot data based on months and offense types and area
     function getdata(offense, area){
         var calculatedYearData2 = [];
-
         for(var i = document.getElementById("yearSlide2").valueLow; i <= document.getElementById("yearSlide2").valueHigh; i++){
             allData[6-i].forEach(function(entry) {
                     calculatedYearData2.push(entry)
