@@ -41,7 +41,11 @@
         <input onchange="updateMonth()" id="monthSlide" type="range" multiple value="1,12" min="1" max="12" step="1" />
         <p>From <span id="startMonth">Janurary</span> to <span id="endMonth">December</span></p>
     </div>
-    <br><br>
+
+    <div class="legend" style="text-align: center;">
+        <p><span style="color:seagreen;font-weight: bold;">Green Dots</span> = Non-Force</br>
+        <span style="color:red;font-weight: bold;">Red Dots</span> = With Forced</p>
+    </div>
     <div class="controlButtons">
         <button id="start">Plot all points at once</button>
         <button id="startWithAnimation">Plot points with Animation</button>
@@ -91,10 +95,9 @@
 <style>
 
     .plotFilters{
-        border: 1px solid black;
         top: 1000px;
         left: 50%;
-        width: 280px;
+        width: 320px;
         min-width: 220px;
         text-align: center;
         position: absolute;
